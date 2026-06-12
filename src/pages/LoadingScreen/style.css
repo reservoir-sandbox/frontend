@@ -1,0 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&family=Jost:ital,wght@0,100..900;1,100..900&display=swap');
+
+.loading-screen {
+  background-color: #d50c0e;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.4rem;
+}
+
+.loading-logo {
+  width: clamp(200px, 40vw, 360px);
+  height: auto;
+  object-fit: contain;
+  border-radius: 10px;
+  animation: logoFadeIn 0.8s ease forwards;
+}
+
+@keyframes logoFadeIn {
+  from { opacity: 0; transform: translateY(-18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.binary-bar-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  animation: barFadeIn 1s 0.4s ease both;
+}
+
+@keyframes barFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.binary-bar {
+  display: flex;
+  gap: 0.35rem;
+  font-family: "Jost", sans-serif;
+  font-size: clamp(1.4rem, 3.5vw, 2rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  user-select: none;
+}
+
+.binary-digit {
+  display: inline-block;
+  width: 1.4ch;
+  text-align: center;
+}
+
+.binary-digit.zero {
+  color: #FDF0D5;
+  text-shadow: 0 0 6px rgba(253,240,213,0.3);
+}
+
+.binary-digit.one {
+  color: #F7EFE1;
+  text-shadow:
+    0 0 8px rgba(159,7,18,0.8),
+    0 0 20px rgba(159,7,18,0.5),
+    0 0 40px rgba(159,7,18,0.25);
+  animation: pulse 0.7s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+  from { text-shadow: 0 0 8px rgba(159,7,18,0.8), 0 0 20px rgba(159,7,18,0.5); }
+  to   { text-shadow: 0 0 14px rgba(159,7,18,1),  0 0 36px rgba(159,7,18,0.8), 0 0 60px rgba(159,7,18,0.4); }
+}
