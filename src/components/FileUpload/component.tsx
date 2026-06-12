@@ -89,7 +89,7 @@ export default function Pattern({
       const validFiles: FileWithPreview[] = []
 
       for (const file of newFiles) {
-        const isValidELF = await isELFFile(file.file)
+        const isValidELF = await isELFFile(file.file as File)
 
         if (isValidELF) {
           validFiles.push(file)

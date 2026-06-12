@@ -23,7 +23,7 @@ export default function LoadingScreen({
     totalSteps,
 }: LoadingScreenProps) {
     const [offset, setOffset] = useState(0);
-    const [step, setStep] = useState(0);
+    const [, setStep] = useState(0);
     const [opacity, setOpacity] = useState(1);
 
     useEffect(() => {

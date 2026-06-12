@@ -8,7 +8,7 @@ import ProtectedLayout from "./pages/ProtectedLayout/page"
 import Report from "./pages/Report/page"
 
 export default function App() {
-  const [loggedIn, setLoggedIn] = useState(true)
+  const [loggedIn] = useState(true)
 
   return (
     <Routes>
