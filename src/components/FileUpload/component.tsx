@@ -2,37 +2,23 @@ import { useEffect, useState } from "react"
 import {
   formatBytes,
   useFileUpload,
-  type FileWithPreview,
+  type FileWithPreview
 } from "@/hooks/use-file-upload.ts"
+
 import {
   Alert,
   AlertAction,
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert"
-import { Badge } from "@/components/ui/badge"
 
+import { Badge } from "@/components/ui/badge"
+import type { FileUploadItem, ProgressUploadProps } from "./types"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Spinner } from "@/components/ui/spinner"
 import { CircleAlertIcon, FileTextIcon, RefreshCwIcon, UploadIcon, XIcon } from 'lucide-react'
-
-interface FileUploadItem extends FileWithPreview {
-  progress: number
-  status: "uploading" | "completed" | "error"
-  error?: string
-}
-
-interface ProgressUploadProps {
-  maxFiles?: number
-  maxSize?: number
-  accept?: string
-  multiple?: boolean
-  className?: string
-  onFilesChange?: (files: FileWithPreview[]) => void
-  simulateUpload?: boolean
-}
 
 const ELF_SIGNATURE = [0x7F, 0x45, 0x4C, 0x46]
 
