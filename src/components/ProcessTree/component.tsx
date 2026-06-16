@@ -1,5 +1,6 @@
 import "@xyflow/react/dist/style.css"
 import dagre from "@dagrejs/dagre"
+import type { Data, Edge, Node } from './types'
 
 import {
     Background,
@@ -17,26 +18,6 @@ const nodeTypes = {
 
 const fitViewOptions: FitViewOptions = {
     padding: 0.9
-}
-
-export interface Data {
-    id: string,
-    data: {
-        label: string
-    }
-}
-
-interface Edge {
-    id: string,
-    source: string,
-    target: string
-}
-
-interface Node {
-    id: string
-    position?: { x: number; y: number }
-    data: { label: string }
-    type?: string
 }
 
 function getLayoutedElements(nodes: Node[], edges: Edge[], nodeWidth = 144, nodeHeight = 60) {
@@ -74,6 +55,7 @@ export function ProcessTree({ data, edges = [] }: { data: Data[], edges?: Edge[]
                     }}
                     colorMode="dark"
                     nodesDraggable={false}
+                    proOptions={{ hideAttribution: true }}
                 >
                     <Background />
                     <Controls />

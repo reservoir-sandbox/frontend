@@ -16,10 +16,8 @@ import {
     TabsTrigger,
 } from "@/components/ui/tabs"
 
-import {
-    type Data,
-    ProcessTree
-} from "@/components/ProcessTree/component"
+import { ProcessTree } from "@/components/ProcessTree/component"
+import { type Data } from "@/components/ProcessTree/types"
 
 function convertTreeToFlow(arr: TreeNode[]): { nodes: Data[], edges: Edge[] } {
     const nodes: Data[] = []
