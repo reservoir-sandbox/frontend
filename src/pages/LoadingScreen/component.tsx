@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import "./style.css";
 import reservoirDogsLogo from "@/assets/loading-logo.jpeg";
 
@@ -20,33 +20,64 @@ interface LoadingScreenProps {
 
 export default function LoadingScreen({
     onComplete,
-    totalSteps,
+    totalSteps = 30,
 }: LoadingScreenProps) {
     const [offset, setOffset] = useState(0);
-    const [, setStep] = useState(0);
+    const [step, setStep] = useState(0);
     const [opacity, setOpacity] = useState(1);
+    
+    const intervalRef = useRef<NodeJS.Timeout | null>(null);
+    const isCompleteRef = useRef(false);
 
     useEffect(() => {
-        const id = setInterval(() => {
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
+
+        intervalRef.current = setInterval(() => {
             setOffset((prev) => (prev + 1) % BAR_LENGTH);
-            setStep((prev) => {
-                const next = prev + 1;
-                if (totalSteps && next >= totalSteps) {
-                    clearInterval(id);
+            setStep((prevStep) => {
+                const nextStep = prevStep + 1;
+                
+                if (nextStep >= totalSteps && !isCompleteRef.current) {
+                    isCompleteRef.current = true;
+                    
+                    if (intervalRef.current) {
+                        clearInterval(intervalRef.current);
+                        intervalRef.current = null;
+                    }
+                    
                     setOpacity(0);
-                    onComplete?.();
+                    
+                    setTimeout(() => {
+                        onComplete?.();
+                    }, 500);
                 }
-                return next;
+                
+                return nextStep;
             });
         }, STEP_MS);
 
-        return () => clearInterval(id);
+        return () => {
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
+            }
+        };
     }, [onComplete, totalSteps]);
 
     const digits = buildBar(offset);
 
     return (
-        <div className="loading-screen" style={{ opacity, transition: 'opacity 0.5s ease-out' }}>
+        <div 
+            className="loading-screen" 
+            style={{ 
+                opacity, 
+                transition: 'opacity 0.5s ease-out',
+                pointerEvents: opacity === 0 ? 'none' : 'auto'
+            }}
+        >
             <img
                 src={reservoirDogsLogo}
                 alt="Reservoir Dogs"
@@ -65,7 +96,6 @@ export default function LoadingScreen({
                         </span>
                     ))}
                 </div>
-
             </div>
         </div>
     );

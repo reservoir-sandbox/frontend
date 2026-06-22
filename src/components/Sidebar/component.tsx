@@ -33,23 +33,36 @@ import {
 } from "lucide-react"
 
 import logo from "@/assets/reservoir-logo.png"
-import profilePicture from "@/assets/profile-pics/1.jpg"
 import { Link, useLocation } from "react-router-dom"
+import type { User } from '@/types/auth';
 
 const menu = [
   { name: 'Main', url: '/', icon: Home },
   { name: 'Past Reports', url: '/past-reports', icon: History }
 ];
 
-const user = {
-  avatar: profilePicture,
-  name: "Mekan",
-  email: "mekanxsari@gmail.com"
+interface SidebarProps {
+  user: User;
+  onLogout: () => void;
 }
 
-export default function AppSidebar() {
+export default function AppSidebar({ user, onLogout }: SidebarProps) {
   const location = useLocation()
-  const isMobile = useSidebar()
+  const { isMobile } = useSidebar()
+
+  const getProfileImage = (characterId?: string) => {
+    const id = characterId || '1';
+    return `/profile-pics/${id}.jpg`;
+  }
+
+  const profileImage = getProfileImage(user.character);
+
+  const handleLogout = () => {
+    if (onLogout) {
+      onLogout();
+    }
+  };
+
   return (
     <Sidebar>
       <SidebarHeader className="flex flex-row items-center justify-center py-6 border-b mb-2">
@@ -92,11 +105,11 @@ export default function AppSidebar() {
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
                   <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarImage src={profileImage} />
                     <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-medium">{user.name}</span>
+                    <span className="truncate font-medium">{user.username}</span>
                     <span className="truncate text-xs">{user.email}</span>
                   </div>
                   <ChevronsUpDown className="ml-auto size-4" />
@@ -111,17 +124,17 @@ export default function AppSidebar() {
                 <DropdownMenuLabel className="p-0 font-normal">
                   <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                     <Avatar className="h-8 w-8 rounded-lg">
-                      <AvatarImage src={user.avatar} alt={user.name} />
+                      <AvatarImage src={profileImage} alt={user.username} />
                       <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                     </Avatar>
                     <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-medium">{user.name}</span>
+                      <span className="truncate font-medium">{user.username}</span>
                       <span className="truncate text-xs">{user.email}</span>
                     </div>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>
                   <LogOut />
                   Log out
                 </DropdownMenuItem>

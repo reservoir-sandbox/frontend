@@ -1,105 +1,305 @@
-import { Button } from "@/components/ui/button"
+import React, { useReducer, useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 import {
-    Field,
-    FieldDescription,
-    FieldGroup,
-    FieldLabel,
-} from "@/components/ui/field"
-
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field';
 import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLoading } from '@/contexts/LoadingContext';
+import Logo from '@/assets/reservoir-logo.png';
+import Cover from '@/assets/loading-logo.jpeg';
+import LoadingScreen from '../LoadingScreen/component';
+import type { RegisterFormState, RegisterFormAction } from './types';
 
-import { Input } from "@/components/ui/input"
-import { Link } from "react-router-dom"
+const validatePassword = (password: string, confirmPassword: string): string | null => {
+  if (password.length < 8) {
+    return 'Password must be at least 8 characters long';
+  }
+  if (password !== confirmPassword) {
+    return 'Passwords do not match';
+  }
+  return null;
+};
 
-import Logo from "@/assets/reservoir-logo.png"
-import Cover from "@/assets/loading-logo.jpeg"
+const formReducer = (
+  state: RegisterFormState,
+  action: RegisterFormAction
+): RegisterFormState => {
+  switch (action.type) {
+    case 'SET_FIELD':
+      return { ...state, [action.field]: action.value };
+    case 'SET_LOADING':
+      return { ...state, loading: action.payload };
+    case 'SET_ERROR':
+      return { ...state, error: action.payload };
+    case 'SET_SUCCESS':
+      return { ...state, success: action.payload };
+    case 'RESET':
+      return {
+        ...state,
+        username: '',
+        email: '',
+        character: '',
+        password: '',
+        confirmPassword: '',
+        success: false,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
 
-export default function Register() {
-    return (
-        <div className="grid min-h-svh lg:grid-cols-2">
-            <div className="flex flex-col gap-4 p-6 md:p-10">
-                <div className="flex justify-center gap-2 md:justify-start">
-                    <a href="#" className="flex items-center gap-2 font-medium">
-                        <img src={Logo} className="h-6" />
-                    </a>
-                </div>
-                <div className="flex flex-1 items-center justify-center mt-5">
-                    <div className="w-full max-w-xs">
-                        <form className={"flex flex-col gap-6"} >
-                            <FieldGroup>
-                                <div className="flex flex-col items-center gap-1 text-center">
-                                    <h1 className="text-2xl font-bold">Create your account</h1>
-                                    <p className="text-sm text-balance text-muted-foreground">
-                                        Fill in the form below to create your account
-                                    </p>
-                                </div>
-                                <Field>
-                                    <FieldLabel htmlFor="name">Full Name</FieldLabel>
-                                    <Input id="name" type="text" placeholder="John Doe" required />
-                                </Field>
-                                <Field>
-                                    <FieldLabel htmlFor="email">Email</FieldLabel>
-                                    <Input id="email" type="email" placeholder="m@example.com" required />
-                                </Field>
-                                <Field>
-                                    <FieldLabel htmlFor="email">Character</FieldLabel>
-                                    <Select required>
-                                        <SelectTrigger className="w-45">
-                                            <SelectValue placeholder="Select Character" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectGroup>
-                                                <SelectItem value="1">Mr. White</SelectItem>
-                                                <SelectItem value="2">Mr. Orange</SelectItem>
-                                                <SelectItem value="3">Mr. Blonde</SelectItem>
-                                                <SelectItem value="4">Mr. Pink</SelectItem>
-                                                <SelectItem value="5">Mr. Brown</SelectItem>
-                                                <SelectItem value="6">Mr. Blue</SelectItem>
-                                                <SelectItem value="7">Nice Guy Eddie</SelectItem>
-                                                <SelectItem value="8">Joe Cobol</SelectItem>
-                                            </SelectGroup>
-                                        </SelectContent>
-                                    </Select>
-                                </Field>
-                                <Field>
-                                    <FieldLabel htmlFor="password">Password</FieldLabel>
-                                    <Input id="password" type="password" placeholder="*********" required />
-                                    {/* <FieldDescription>
-                                        Must be at least 8 characters long.
-                                    </FieldDescription> */}
-                                </Field>
-                                <Field>
-                                    <FieldLabel htmlFor="confirm-password">Confirm Password</FieldLabel>
-                                    <Input id="confirm-password" type="password" placeholder="*********" required />
-                                    {/* <FieldDescription>Please confirm your password.</FieldDescription> */}
-                                </Field>
-                                <Field>
-                                    <Button type="submit">Create Account</Button>
-                                </Field>
-                                <Field>
-                                    <FieldDescription className="px-6 text-center">
-                                        Already have an account? <Link to={"/login"}>Sign in</Link>
-                                    </FieldDescription>
-                                </Field>
-                            </FieldGroup>
-                        </form>
+const Register: React.FC = () => {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const { showLoading, setShowLoading } = useLoading();
+
+  const [state, dispatch] = useReducer(formReducer, {
+    username: '',
+    email: '',
+    character: '',
+    password: '',
+    confirmPassword: '',
+    loading: false,
+    error: null,
+    success: false,
+  });
+
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isAuthenticated && !showLoading) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate, showLoading]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    dispatch({
+      type: 'SET_FIELD',
+      field: name as keyof Omit<RegisterFormState, 'loading' | 'error' | 'success'>,
+      value,
+    });
+
+    if (name === 'password' || name === 'confirmPassword') {
+      const newPassword = name === 'password' ? value : state.password;
+      const newConfirmPassword =
+        name === 'confirmPassword' ? value : state.confirmPassword;
+      const error = validatePassword(newPassword, newConfirmPassword);
+      setPasswordError(error);
+    }
+  };
+
+  const handleSelectChange = (value: string) => {
+    dispatch({
+      type: 'SET_FIELD',
+      field: 'character',
+      value,
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const passwordValidationError = validatePassword(
+      state.password,
+      state.confirmPassword
+    );
+    if (passwordValidationError) {
+      setPasswordError(passwordValidationError);
+      return;
+    }
+
+    dispatch({ type: 'SET_LOADING', payload: true });
+    dispatch({ type: 'SET_ERROR', payload: null });
+
+    try {
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: state.username,
+          email: state.email,
+          password: state.password,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Registration failed');
+      }
+
+      dispatch({ type: 'SET_SUCCESS', payload: true });
+      setShowLoading(true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'An error occurred';
+      dispatch({ type: 'SET_ERROR', payload: message });
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  };
+
+  const handleLoadingComplete = () => {
+    setShowLoading(false);
+    navigate('/login');
+  };
+
+  return (
+    <>
+      {showLoading && (
+        <LoadingScreen onComplete={handleLoadingComplete} totalSteps={30} />
+      )}
+
+      <div className="grid min-h-svh lg:grid-cols-2">
+        <div className="flex flex-col gap-4 p-6 md:p-10">
+          <div className="flex justify-center gap-2 md:justify-start">
+            <a href="#" className="flex items-center gap-2 font-medium">
+              <img src={Logo} className="h-6" alt="Logo" />
+            </a>
+          </div>
+          <div className="flex flex-1 items-center justify-center mt-5">
+            <div className="w-full max-w-xs">
+              <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+                <FieldGroup>
+                  <div className="flex flex-col items-center gap-1 text-center">
+                    <h1 className="text-2xl font-bold">Create your account</h1>
+                    <p className="text-sm text-balance text-muted-foreground">
+                      Fill in the form below to create your account
+                    </p>
+                  </div>
+
+                  <Field>
+                    <FieldLabel htmlFor="username">Username</FieldLabel>
+                    <Input
+                      id="username"
+                      name="username"
+                      type="text"
+                      placeholder="mr.white"
+                      value={state.username}
+                      onChange={handleChange}
+                      required
+                      disabled={state.loading}
+                    />
+                  </Field>
+
+                  <Field>
+                    <FieldLabel htmlFor="email">Email</FieldLabel>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      placeholder="m@example.com"
+                      value={state.email}
+                      onChange={handleChange}
+                      required
+                      disabled={state.loading}
+                    />
+                  </Field>
+
+                  <Field>
+                    <FieldLabel htmlFor="character">Character</FieldLabel>
+                    <Select
+                      value={state.character}
+                      onValueChange={handleSelectChange}
+                      required
+                      disabled={state.loading}
+                    >
+                      <SelectTrigger className="w-45">
+                        <SelectValue placeholder="Select Character" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value="1">Mr. White</SelectItem>
+                          <SelectItem value="2">Mr. Orange</SelectItem>
+                          <SelectItem value="3">Mr. Blonde</SelectItem>
+                          <SelectItem value="4">Mr. Pink</SelectItem>
+                          <SelectItem value="5">Mr. Brown</SelectItem>
+                          <SelectItem value="6">Mr. Blue</SelectItem>
+                          <SelectItem value="7">Nice Guy Eddie</SelectItem>
+                          <SelectItem value="8">Joe Cobol</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+
+                  <Field>
+                    <FieldLabel htmlFor="password">Password</FieldLabel>
+                    <Input
+                      id="password"
+                      name="password"
+                      type="password"
+                      placeholder="*********"
+                      value={state.password}
+                      onChange={handleChange}
+                      required
+                      disabled={state.loading}
+                    />
+                  </Field>
+
+                  <Field>
+                    <FieldLabel htmlFor="confirmPassword">
+                      Confirm Password
+                    </FieldLabel>
+                    <Input
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type="password"
+                      placeholder="*********"
+                      value={state.confirmPassword}
+                      onChange={handleChange}
+                      required
+                      disabled={state.loading}
+                    />
+                    {passwordError && (
+                      <p className="text-sm text-red-500 mt-1">{passwordError}</p>
+                    )}
+                  </Field>
+
+                  <Field>
+                    <Button type="submit" disabled={state.loading}>
+                      {state.loading ? 'Creating Account...' : 'Create Account'}
+                    </Button>
+                  </Field>
+
+                  {state.error && (
+                    <div className="text-sm text-red-500 text-center">
+                      {state.error}
                     </div>
-                </div>
+                  )}
+
+                  <Field>
+                    <FieldDescription className="px-6 text-center">
+                      Already have an account? <Link to="/login">Sign in</Link>
+                    </FieldDescription>
+                  </Field>
+                </FieldGroup>
+              </form>
             </div>
-            <div className="hidden bg-[#d50d0d] lg:flex lg:justify-center lg:items-center">
-                <img
-                    src={Cover}
-                    alt="Image"
-                    className="h-100 inline-flex rounded-2xl 2xl:h-125"
-                />
-            </div>
+          </div>
         </div>
-    )
-}
+        <div className="hidden bg-[#d50d0d] lg:flex lg:justify-center lg:items-center">
+          <img
+            src={Cover}
+            alt="Image"
+            className="h-100 inline-flex rounded-2xl 2xl:h-125"
+          />
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default Register;
