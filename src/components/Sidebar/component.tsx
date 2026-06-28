@@ -50,12 +50,13 @@ export default function AppSidebar({ user, onLogout }: SidebarProps) {
   const location = useLocation()
   const { isMobile } = useSidebar()
 
-  const getProfileImage = (characterId?: string) => {
-    const id = characterId || '1';
+  const getProfileImage = () => {
+    // eslint-disable-next-line react-hooks/purity
+    const id = Math.floor(Math.random() * 8) + 1;
     return `/profile-pics/${id}.jpg`;
   }
 
-  const profileImage = getProfileImage(user.character);
+  const profileImage = getProfileImage();
 
   const handleLogout = () => {
     if (onLogout) {

@@ -6,14 +6,6 @@ import {
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -51,7 +43,6 @@ const formReducer = (
         ...state,
         username: '',
         email: '',
-        character: '',
         password: '',
         confirmPassword: '',
         success: false,
@@ -70,7 +61,6 @@ const Register: React.FC = () => {
   const [state, dispatch] = useReducer(formReducer, {
     username: '',
     email: '',
-    character: '',
     password: '',
     confirmPassword: '',
     loading: false,
@@ -101,14 +91,6 @@ const Register: React.FC = () => {
       const error = validatePassword(newPassword, newConfirmPassword);
       setPasswordError(error);
     }
-  };
-
-  const handleSelectChange = (value: string) => {
-    dispatch({
-      type: 'SET_FIELD',
-      field: 'character',
-      value,
-    });
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -207,32 +189,6 @@ const Register: React.FC = () => {
                       required
                       disabled={state.loading}
                     />
-                  </Field>
-
-                  <Field>
-                    <FieldLabel htmlFor="character">Character</FieldLabel>
-                    <Select
-                      value={state.character}
-                      onValueChange={handleSelectChange}
-                      required
-                      disabled={state.loading}
-                    >
-                      <SelectTrigger className="w-45">
-                        <SelectValue placeholder="Select Character" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectItem value="1">Mr. White</SelectItem>
-                          <SelectItem value="2">Mr. Orange</SelectItem>
-                          <SelectItem value="3">Mr. Blonde</SelectItem>
-                          <SelectItem value="4">Mr. Pink</SelectItem>
-                          <SelectItem value="5">Mr. Brown</SelectItem>
-                          <SelectItem value="6">Mr. Blue</SelectItem>
-                          <SelectItem value="7">Nice Guy Eddie</SelectItem>
-                          <SelectItem value="8">Joe Cobol</SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
                   </Field>
 
                   <Field>

@@ -24,7 +24,7 @@ export default function MainPage() {
                   Welcome to Reservoir Sandbox
                 </div>
                 <div className='pt-4 text-sm'>
-                  Lorem Ipsum is simply dummy text of the printing and typesetting industry...
+                  Get started by uploading your Linux binaries for analysis. Our sandbox environment will securely process and evaluate your files, providing detailed insights and results.
                 </div>
               </div>
             </div>

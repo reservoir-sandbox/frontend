@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import {
   formatBytes,
   useFileUpload,
@@ -19,6 +20,8 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Spinner } from "@/components/ui/spinner"
 import { CircleAlertIcon, FileTextIcon, RefreshCwIcon, UploadIcon, XIcon } from 'lucide-react'
+import { useAuth } from "@/contexts/AuthContext"
+import { useLoading } from "@/contexts/LoadingContext"
 
 const ELF_SIGNATURE = [0x7F, 0x45, 0x4C, 0x46]
 
@@ -41,16 +44,21 @@ const isELFFile = async (file: File): Promise<boolean> => {
 
 export default function Pattern({
   maxFiles = 1,
-  maxSize = 10 * 1024 * 1024, // 10MB
+  maxSize = 10 * 1024 * 1024,
   accept = ".elf,.bin,application/x-elf,application/x-binary,application/octet-stream",
   multiple = false,
   className,
   onFilesChange,
   simulateUpload = true,
 }: ProgressUploadProps) {
+  const navigate = useNavigate()
+  const { setShowLoading } = useLoading()
+  const { isAuthenticated } = useAuth()
+  
   const [uploadFiles, setUploadFiles] = useState<FileUploadItem[]>([])
   const [elfValidationErrors, setElfValidationErrors] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
 
   const [
     { isDragging, errors },
@@ -156,11 +164,19 @@ export default function Pattern({
           : file
       )
     )
+    setUploadError(null)
   }
 
   const removeUploadFile = (fileId: string) => {
     setUploadFiles((prev) => prev.filter((file) => file.id !== fileId))
     removeFile(fileId)
+    setUploadError(null)
+  }
+
+  const clearAllFiles = () => {
+    clearFiles()
+    setUploadFiles([])
+    setUploadError(null)
   }
 
   const completedCount = uploadFiles.filter(
@@ -175,19 +191,78 @@ export default function Pattern({
     uploadingCount > 0 ||
     errorCount > 0 ||
     completedCount !== uploadFiles.length ||
-    isSubmitting
+    isSubmitting ||
+    !isAuthenticated
 
   const handleSubmit = async () => {
     if (isSubmitDisabled) return
     
     setIsSubmitting(true)
-    
+    setUploadError(null)
+
     try {
-      console.log("Submitting ELF files:", uploadFiles)
+      const token = localStorage.getItem('reservoir-bearer-token')
       
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      if (!token) {
+        throw new Error("No authentication token found. Please login first.")
+      }
+
+      const file = uploadFiles[0]
+
+      if (!file) {
+        throw new Error("No file to upload")
+      }
+
+      const formData = new FormData()
+      formData.append("sample", file.file as File)
+
+      const response = await fetch(`/samples`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+        body: formData,
+      })
+
+      if (!response.ok) {
+        let errorMessage = `Upload failed: ${response.status}`
+        
+        try {
+          const errorData = await response.json()
+          if (errorData.detail) {
+            errorMessage = typeof errorData.detail === "string" 
+              ? errorData.detail 
+              : JSON.stringify(errorData.detail)
+          }
+        } catch {
+          // JSON parse ignore
+        }
+        
+        throw new Error(errorMessage)
+      }
+
+      const data = await response.json()
+      
+      const sampleId = data.sample_id
+
+      setShowLoading(true)
+
+      setTimeout(() => {
+        setShowLoading(false)
+        navigate(`/report/${sampleId}`)
+      }, 5000)
+
     } catch (error) {
-      console.error("Submission failed:", error)
+      console.error("Upload failed:", error)
+      setUploadError(error instanceof Error ? error.message : "Upload failed")
+      
+      setUploadFiles((prev) =>
+        prev.map((f) =>
+          f.id === uploadFiles[0]?.id
+            ? { ...f, status: "error" as const, error: error instanceof Error ? error.message : "Upload failed" }
+            : f
+        )
+      )
     } finally {
       setIsSubmitting(false)
     }
@@ -201,7 +276,8 @@ export default function Pattern({
             "rounded-4xl relative border border-dashed p-8 text-center transition-colors h-full flex flex-col justify-center",
             isDragging
               ? "border-primary bg-primary/5"
-              : "border-muted-foreground/25 hover:border-muted-foreground/50"
+              : "border-muted-foreground/25 hover:border-muted-foreground/50",
+            !isAuthenticated && "opacity-50 cursor-not-allowed"
           )}
           onDragEnter={handleDragEnter}
           onDragLeave={handleDragLeave}
@@ -225,17 +301,19 @@ export default function Pattern({
 
             <div className="space-y-2">
               <h3 className="text-lg font-semibold">Upload ELF Linux Binaries</h3>
-              <p className="text-muted-foreground text-sm">
-                Drag and drop ELF Linux files here or click to browse
-              </p>
               <p className="text-muted-foreground text-xs">
-                Only ELF Linux binary files are accepted. Maximum size: {formatBytes(maxSize)} each
+                Only ELF Linux binary file is accepted. Maximum size: {formatBytes(maxSize)} each
               </p>
+              {!isAuthenticated && (
+                <p className="text-destructive text-xs font-medium">
+                  Please login to upload files
+                </p>
+              )}
             </div>
 
-            <Button onClick={openFileDialog}>
+            <Button onClick={openFileDialog} disabled={!isAuthenticated}>
               <UploadIcon className="h-4 w-4" />
-              Select ELF Files
+              Select ELF File
             </Button>
           </div>
         </div>
@@ -264,7 +342,7 @@ export default function Pattern({
             </div>
           </div>
 
-          <Button onClick={clearFiles} variant="outline" size="sm">
+          <Button onClick={clearAllFiles} variant="outline" size="sm">
             Clear
           </Button>
         </div>
@@ -340,12 +418,22 @@ export default function Pattern({
                 onClick={handleSubmit}
                 disabled={isSubmitDisabled}
               >
-                {isSubmitting ? "Submitting" : "Submit"}
+                {isSubmitting ? "Uploading..." : "Submit"}
                 {isSubmitting && <Spinner data-icon="inline-start" />}
               </Button>
             </div>
           </div>
         </div>
+      )}
+
+      {uploadError && (
+        <Alert variant="destructive" className="mt-5">
+          <CircleAlertIcon />
+          <AlertTitle>Upload Failed</AlertTitle>
+          <AlertDescription>
+            {uploadError}
+          </AlertDescription>
+        </Alert>
       )}
 
       {elfValidationErrors.length > 0 && (

@@ -1,7 +1,6 @@
 export interface RegisterFormState {
   username: string;
   email: string;
-  character: string;
   password: string;
   confirmPassword: string;
   loading: boolean;
