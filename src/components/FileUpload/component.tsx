@@ -216,7 +216,7 @@ export default function Pattern({
       const formData = new FormData()
       formData.append("sample", file.file as File)
 
-      const response = await fetch(`/samples`, {
+      const response = await fetch(`/api/samples`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
