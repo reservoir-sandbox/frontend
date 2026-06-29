@@ -121,7 +121,19 @@ const Register: React.FC = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || 'Registration failed');
+        console.log('Error detail:', errorData);
+
+        let errorMessage = 'Registration failed';
+        if (errorData.detail) {
+          if (Array.isArray(errorData.detail)) {
+            errorMessage = errorData.detail
+              .map((err) => err.msg)
+              .join(', ');
+          } else {
+            errorMessage = errorData.detail;
+          }
+        }
+        throw new Error(errorMessage);
       }
 
       dispatch({ type: 'SET_SUCCESS', payload: true });
