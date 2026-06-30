@@ -20,7 +20,7 @@ const ProtectedLayout: React.FC = () => {
       <LoadingScreen totalSteps={30} />
     );
   }
-
+  
   return (
     <SidebarProvider>
       <div className="flex w-full">

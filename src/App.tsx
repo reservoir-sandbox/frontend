@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
-import { LoadingProvider } from '@/contexts/LoadingContext';
+import { LoadingProvider, useLoading } from '@/contexts/LoadingContext';
 import MainPage from './pages/MainPage/page';
 import PastReports from './pages/PastReports/page';
 import Login from './pages/Login/page';
@@ -36,8 +36,15 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 const AppContent: React.FC = () => {
   const { isLoading } = useAuth();
+  const { showLoading } = useLoading();
 
   if (isLoading) {
+    return (
+      <LoadingScreen totalSteps={30} />
+    );
+  }
+
+  if (showLoading) {
     return (
       <LoadingScreen totalSteps={30} />
     );
@@ -62,7 +69,6 @@ const AppContent: React.FC = () => {
         }
       />
 
-      {/* Protected Routes */}
       <Route
         element={
           <PrivateRoute>
@@ -75,7 +81,6 @@ const AppContent: React.FC = () => {
         <Route path="/report/:id" element={<Report />} />
       </Route>
 
-      {/* 404 */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

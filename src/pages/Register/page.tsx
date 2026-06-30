@@ -9,10 +9,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLoading } from '@/contexts/LoadingContext';
 import Logo from '@/assets/reservoir-logo.png';
 import Cover from '@/assets/loading-logo.jpeg';
-import LoadingScreen from '../LoadingScreen/component';
 import type { RegisterFormState, RegisterFormAction } from './types';
 
 const validatePassword = (password: string, confirmPassword: string): string | null => {
@@ -56,7 +54,6 @@ const formReducer = (
 const Register: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const { showLoading, setShowLoading } = useLoading();
 
   const [state, dispatch] = useReducer(formReducer, {
     username: '',
@@ -71,10 +68,10 @@ const Register: React.FC = () => {
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isAuthenticated && !showLoading) {
+    if (isAuthenticated) {
       navigate('/');
     }
-  }, [isAuthenticated, navigate, showLoading]);
+  }, [isAuthenticated, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -137,7 +134,7 @@ const Register: React.FC = () => {
       }
 
       dispatch({ type: 'SET_SUCCESS', payload: true });
-      setShowLoading(true);
+      navigate('/login');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'An error occurred';
       dispatch({ type: 'SET_ERROR', payload: message });
@@ -146,17 +143,8 @@ const Register: React.FC = () => {
     }
   };
 
-  const handleLoadingComplete = () => {
-    setShowLoading(false);
-    navigate('/login');
-  };
-
   return (
     <>
-      {showLoading && (
-        <LoadingScreen onComplete={handleLoadingComplete} totalSteps={30} />
-      )}
-
       <div className="grid min-h-svh lg:grid-cols-2">
         <div className="flex flex-col gap-4 p-6 md:p-10">
           <div className="flex justify-center gap-2 md:justify-start">

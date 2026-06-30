@@ -20,8 +20,8 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Spinner } from "@/components/ui/spinner"
 import { CircleAlertIcon, FileTextIcon, RefreshCwIcon, UploadIcon, XIcon } from 'lucide-react'
-import { useAuth } from "@/contexts/AuthContext"
-import { useLoading } from "@/contexts/LoadingContext"
+import { useLoading } from '@/contexts/LoadingContext'
+import { useAuth } from '@/contexts/AuthContext'
 
 const ELF_SIGNATURE = [0x7F, 0x45, 0x4C, 0x46]
 
@@ -52,8 +52,8 @@ export default function Pattern({
   simulateUpload = true,
 }: ProgressUploadProps) {
   const navigate = useNavigate()
-  const { setShowLoading } = useLoading()
-  const { isAuthenticated } = useAuth()
+  const { setShowLoading } = useLoading();
+  const { isAuthenticated } = useAuth();
   
   const [uploadFiles, setUploadFiles] = useState<FileUploadItem[]>([])
   const [elfValidationErrors, setElfValidationErrors] = useState<string[]>([])

@@ -13,7 +13,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLoading } from '@/contexts/LoadingContext';
 import Logo from '@/assets/reservoir-logo.png';
 import Cover from '@/assets/loading-logo.jpeg';
-import LoadingScreen from '../LoadingScreen/component';
 import type { LoginFormState, LoginFormAction } from './types';
 
 const loginReducer = (
@@ -80,6 +79,11 @@ const Login: React.FC = () => {
 
     if (result.success) {
       setShowLoading(true);
+
+      setTimeout(() => {
+        setShowLoading(false);
+        navigate('/');
+      }, 5000);
     } else {
       dispatch({ type: 'SET_ERROR', payload: result.error || 'Login failed' });
     }
@@ -87,17 +91,8 @@ const Login: React.FC = () => {
     dispatch({ type: 'SET_LOADING', payload: false });
   };
 
-  const handleLoadingComplete = () => {
-    setShowLoading(false);
-    navigate('/');
-  };
-
   return (
     <>
-      {showLoading && (
-        <LoadingScreen onComplete={handleLoadingComplete} totalSteps={30} />
-      )}
-
       <div className="grid min-h-svh lg:grid-cols-2">
         <div className="flex flex-col gap-4 p-6 md:p-10">
           <div className="flex justify-center gap-2 md:justify-start">
