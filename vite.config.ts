@@ -7,13 +7,19 @@ import path from 'path'
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const apiBaseUrl = env.VITE_API_URL?.replace(/\/api\/v1$/, '')
-  
+
   return {
     plugins: [
       react(),
       babel({ presets: [reactCompilerPreset()] }),
       tailwindcss()
     ],
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: './src/test/setup.ts',
+      css: true,
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
