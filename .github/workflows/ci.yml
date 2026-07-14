@@ -91,7 +91,7 @@ jobs:
 
       - name: Update frontend HelmRelease image tag
         run: |
-          yq eval -i '.spec.values.image.repository = "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" | .spec.values.image.tag = "${{ github.sha }}"' gitops-deployment/apps/frontend/frontend-release.yaml
+          yq eval -i '.spec.values.image.repository = "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" | .spec.values.image.tag = "${{ github.sha }}"' gitops-deployment/apps/frontend/deployment.yaml
           git -C gitops-deployment config user.name "github-actions"
           git -C gitops-deployment config user.email "github-actions@github.com"
           git -C gitops-deployment add apps/frontend/deployment.yaml
