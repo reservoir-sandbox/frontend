@@ -22,6 +22,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { CircleAlertIcon, FileTextIcon, RefreshCwIcon, UploadIcon, XIcon } from 'lucide-react'
 import { useLoading } from '@/contexts/LoadingContext'
 import { useAuth } from '@/contexts/AuthContext'
+import { API_URL } from "@/utils/api"
 
 const ELF_SIGNATURE = [0x7F, 0x45, 0x4C, 0x46]
 
@@ -216,7 +217,7 @@ export default function Pattern({
       const formData = new FormData()
       formData.append("sample", file.file as File)
 
-      const response = await fetch(`/api/samples`, {
+      const response = await fetch(`${API_URL}/samples`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
