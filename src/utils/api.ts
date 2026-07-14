@@ -105,7 +105,7 @@ export const api = {
 
 const refreshToken = async (): Promise<boolean> => {
   try {
-    const response = await fetch('/api/refresh', {
+    const response = await fetch(`${API_URL}/refresh`, {
       method: 'POST',
       credentials: 'include',
     });
