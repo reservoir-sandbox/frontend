@@ -33,6 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { MoreHorizontalIcon } from "lucide-react"
+import { API_URL } from "@/utils/api"
 
 interface Sample {
   sample_id: number
@@ -55,7 +56,7 @@ export default function PastReports() {
     
     try {
       const token = localStorage.getItem('reservoir-bearer-token')
-      const response = await fetch('/api/samples', {
+      const response = await fetch(`${API_URL}/samples`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -95,7 +96,7 @@ export default function PastReports() {
 
     try {
       const token = localStorage.getItem('reservoir-bearer-token')
-      const response = await fetch(`/api/samples/${sampleToDelete.sample_id}`, {
+      const response = await fetch(`${API_URL}/samples/${sampleToDelete.sample_id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { User, AuthContextType } from '@/types/auth';
+import { API_URL } from '@/utils/api';
 
 const TOKEN_KEY = 'reservoir-bearer-token';
 const TOKEN_EXPIRY_KEY = 'reservoir-token-expiry';
@@ -52,7 +53,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const fetchUserInfo = useCallback(async (): Promise<boolean> => {
     try {
       const token = localStorage.getItem(TOKEN_KEY);
-      const response = await fetch('/api/about_me', {
+      const response = await fetch(`${API_URL}/about_me`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -77,7 +78,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return false;
       }
 
-      const response = await fetch('/api/refresh', {
+      const response = await fetch(`${API_URL}/refresh`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -117,7 +118,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(null);
         setIsAuthenticated(false);
 
-        await fetch('/api/logout', {
+        await fetch(`${API_URL}/logout`, {
           method: 'POST',
           credentials: 'include',
           headers: {
@@ -164,7 +165,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     try {
       const token = localStorage.getItem(TOKEN_KEY);
-      const response = await fetch('/api/about_me', {
+      const response = await fetch(`${API_URL}/about_me`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -196,7 +197,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         formData.append('username', username);
         formData.append('password', password);
 
-        const response = await fetch('/api/login', {
+        const response = await fetch(`${API_URL}/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',

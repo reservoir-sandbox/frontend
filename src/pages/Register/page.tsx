@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Logo from '@/assets/reservoir-logo.png';
 import Cover from '@/assets/loading-logo.jpeg';
 import type { RegisterFormState, RegisterFormAction } from './types';
+import { API_URL } from '@/utils/api';
 
 const validatePassword = (password: string, confirmPassword: string): string | null => {
   if (password.length < 8) {
@@ -106,7 +107,7 @@ const Register: React.FC = () => {
     dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
-      const response = await fetch('/api/register', {
+      const response = await fetch(`${API_URL}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
