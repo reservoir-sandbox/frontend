@@ -74,6 +74,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args : |
+            VITE_API_URL=/api/v1
 
       - name: Update image tag in gitops-deployment
         uses: actions/checkout@v4
