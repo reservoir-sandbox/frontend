@@ -15,7 +15,7 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -74,6 +74,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args : |
+            VITE_API_URL=/api/v1
 
       - name: Update image tag in gitops-deployment
         uses: actions/checkout@v4
@@ -87,11 +89,19 @@ jobs:
           wget https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64 -O /usr/local/bin/yq
           chmod +x /usr/local/bin/yq
 
-      - name: Update frontend HelmRelease image tag
+      - name: Update frontend image tag
         run: |
-          yq eval -i '.spec.values.image.repository = "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" | .spec.values.image.tag = "${{ github.sha }}"' gitops-deployment/apps/frontend/frontend-release.yaml
-          git -C gitops-deployment config user.name "github-actions"
-          git -C gitops-deployment config user.email "github-actions@github.com"
-          git -C gitops-deployment add apps/frontend/frontend-release.yaml
-          git -C gitops-deployment commit -m "Update frontend image to ${{ github.sha }}"
-          git -C gitops-deployment push
+          NEW_IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+
+          yq eval -i ".spec.template.spec.containers[0].image = \"$NEW_IMAGE\"" gitops-deployment/apps/frontend/deployment.yaml
+
+          git -C gitops-deployment config user.name "github-actions[bot]"
+          git -C gitops-deployment config user.email "github-actions[bot]@users.noreply.github.com"
+          git -C gitops-deployment add apps/frontend/deployment.yaml
+
+          if [ -n "$(git -C gitops-deployment status --porcelain)" ]; then
+            git -C gitops-deployment commit -m "chore(frontend): auto-update image tag to ${{ github.sha }}"
+            git -C gitops-deployment push
+          else
+            echo "Frontend manifest is already synchronized. Skipping git operations."
+          fi
