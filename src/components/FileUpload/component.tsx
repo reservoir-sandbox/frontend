@@ -244,13 +244,13 @@ export default function Pattern({
 
       const data = await response.json()
       
-      const sampleId = data.sample_id
+      const jobID = data.id
 
       setShowLoading(true)
 
       setTimeout(() => {
         setShowLoading(false)
-        navigate(`/report/${sampleId}`)
+        navigate(`/report/${jobID}`)
       }, 5000)
 
     } catch (error) {

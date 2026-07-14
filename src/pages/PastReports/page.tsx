@@ -39,8 +39,8 @@ interface Sample {
   sample_id: number
   filename: string
   uploaded_at: string
-  latest_job_id: number | null
-  latest_job_status: string | null
+  current_job_id: number | null
+  current_job_status: string | null
 }
 
 export default function PastReports() {
@@ -205,13 +205,13 @@ export default function PastReports() {
                     <TableCell>{sample.filename}</TableCell>
                     <TableCell>{new Date(sample.uploaded_at).toLocaleString()}</TableCell>
                     <TableCell>
-                      {sample.latest_job_id ? (
-                        sample.latest_job_id
+                      {sample.current_job_id ? (
+                        sample.current_job_id
                       ) : (
                         <>-</>
                       )}
                     </TableCell>
-                    <TableCell>{getStatusBadge(sample.latest_job_status)}</TableCell>
+                    <TableCell>{getStatusBadge(sample.current_job_status)}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -221,8 +221,8 @@ export default function PastReports() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          {sample.latest_job_id ? (
-                            <Link to={`/report/${sample.latest_job_id}`}>
+                          {sample.current_job_id ? (
+                            <Link to={`/report/${sample.current_job_id}`}>
                               <DropdownMenuItem>
                                 View Report
                               </DropdownMenuItem>

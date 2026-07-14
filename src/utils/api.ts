@@ -1,4 +1,4 @@
-const TOKEN_KEY = 'reservoir-bearer-token';
+export const TOKEN_KEY = 'reservoir-bearer-token';
 export const API_URL = import.meta.env.VITE_API_URL
 
 interface FetchOptions extends RequestInit {

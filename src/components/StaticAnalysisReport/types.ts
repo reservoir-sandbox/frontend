@@ -70,11 +70,10 @@ export interface SecurityMitigations {
     stack_canary: boolean
 }
 
-export interface StaticAnalysisData {
+export interface ReportData {
     filename: string
     filepath: string
     file_size_bytes: number
-    error?: string | null
     metadata: Metadata
     header: ElfHeader
     sections: Section[]
@@ -90,4 +89,14 @@ export interface StaticAnalysisData {
     security_mitigations: SecurityMitigations
     build_id: string
     compiler_info: string[]
+    error?: string | null
 }
+
+export interface StaticAnalysisResponse {
+    task_id: string
+    status: string
+    location: string
+    report: ReportData
+}
+
+export type StaticAnalysisData = ReportData

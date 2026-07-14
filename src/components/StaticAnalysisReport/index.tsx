@@ -49,7 +49,7 @@ import {
 } from "@/components/ui/tooltip"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 
-import { type StaticAnalysisData } from "./types.ts"
+import { type ReportData } from "./types"
 
 function formatBytes(bytes: number) {
     if (bytes === 0) return "0 B"
@@ -158,7 +158,7 @@ function isSuspiciousString(s: string) {
     return SUSPICIOUS_PATTERN.test(s)
 }
 
-export default function StaticAnalysisReport({ data }: { data: StaticAnalysisData }) {
+export default function StaticAnalysisReport({ data }: { data: ReportData }) {
     const suspiciousStrings = useMemo(
         () => data.strings_analysis.strings.filter(isSuspiciousString),
         [data.strings_analysis.strings]
