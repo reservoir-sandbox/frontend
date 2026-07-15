@@ -49,6 +49,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
+import { useAuth } from "@/contexts/AuthContext"
 
 import { type MLReportData } from "./types"
 
@@ -195,8 +196,10 @@ function IndicatorGroup({
 }
 
 export default function MLReport({ data }: { data: MLReportData }) {
+    const { user } = useAuth()
     const tone = verdictTone(data.verdict)
     const VerdictIcon = tone.icon
+    const isFallback = data.generation.mode === "deterministic_fallback"
 
     const indicatorGroups = useMemo(() => {
         const groups: { label: string; icon: React.ElementType; values: string[] }[] = [
@@ -216,6 +219,40 @@ export default function MLReport({ data }: { data: MLReportData }) {
     const hasFamily = !isEmpty(data.family)
     const hasMalwareType = !isEmpty(data.malware_type)
     const hasNarrative = !isEmpty(data.report_markdown)
+
+    // The summarizer's fallback path (LLM output failed grounding validation)
+    // doesn't reliably conform to the normal evidence/indicators contract -
+    // per LLM_integration.md, show this as inconclusive rather than trying
+    // to render the detailed report, and only reveal the raw reason to admins.
+    if (isFallback) {
+        return (
+            <Card className="border-border">
+                <CardHeader className="pb-3">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <CardTitle className="font-mono text-base">{data.source.filename}</CardTitle>
+                            <CardDescription className="mt-1">
+                                Automated summarization could not produce a validated result for this sample.
+                            </CardDescription>
+                        </div>
+                        <Badge variant="outline" className="gap-1.5 bg-yellow-500/10 text-yellow-600 border-yellow-500/30">
+                            <HelpCircle className="h-3.5 w-3.5" />
+                            inconclusive
+                        </Badge>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <CopyableHash label="SHA-256" value={data.source.raw_sha256} />
+                    {user?.role === "admin" && data.generation.reason && (
+                        <Alert className="mt-4">
+                            <AlertTitle>Diagnostic reason (admin only)</AlertTitle>
+                            <AlertDescription className="font-mono text-xs">{data.generation.reason}</AlertDescription>
+                        </Alert>
+                    )}
+                </CardContent>
+            </Card>
+        )
+    }
 
     return (
         <div className="w-full space-y-4">
@@ -327,7 +364,7 @@ export default function MLReport({ data }: { data: MLReportData }) {
                                                     key={j}
                                                     className="rounded-md border border-border bg-background px-2 py-1 font-mono text-[11px]"
                                                 >
-                                                    {ex}
+                                                    {typeof ex === "string" ? ex : JSON.stringify(ex)}
                                                 </span>
                                             ))}
                                         </div>

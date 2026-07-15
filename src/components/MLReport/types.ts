@@ -1,7 +1,10 @@
 export interface MLEvidence {
     title: string
     explanation: string
-    examples: string[]
+    // The summarizer's deterministic_fallback mode has been observed to put
+    // non-string values here (e.g. a raw ELF metadata object) despite the
+    // documented contract - treat entries defensively when rendering.
+    examples: unknown[]
     source_ids: string[]
 }
 
@@ -22,9 +25,11 @@ export interface MLIndicators {
 
 export interface MLGeneration {
     mode: string
-    model: string
-    eval_count: number
-    total_duration_ns: number
+    model?: string
+    eval_count?: number
+    total_duration_ns?: number
+    // Only present (and only meaningful) when mode === "deterministic_fallback"
+    reason?: string
 }
 
 export interface MLSource {
