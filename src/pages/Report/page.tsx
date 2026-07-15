@@ -153,7 +153,6 @@ export default function Report() {
                 },
             })
 
-
             if (!response.ok) {
                 if (response.status === 404) {
                     if (isMountedRef.current) setError("Job not found")
@@ -166,7 +165,6 @@ export default function Report() {
             }
 
             const data: Job = await response.json()
-            console.log(data)
             if (isMountedRef.current) {
                 setJob(data)
                 parseJobResults(data)
@@ -326,7 +324,7 @@ export default function Report() {
                     {renderContent(
                         "ml",
                         mlReport ? (
-                            <MLReport data={mlReport} error={mlError} />
+                            <MLReport data={mlReport} />
                         ) : (
                             <Card>
                                 <CardContent className="py-8 text-center text-muted-foreground">

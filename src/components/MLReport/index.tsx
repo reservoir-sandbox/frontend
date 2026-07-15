@@ -48,8 +48,6 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
-import { useAuth } from "@/contexts/AuthContext"
 
 import { type MLReportData, type MLGeneration } from "./types"
 
@@ -196,12 +194,53 @@ function IndicatorGroup({
     )
 }
 
+function renderGenerationInfo(generation: MLGeneration) {
+    if (generation.mode === "llm") {
+        return (
+            <>
+                <div className="rounded-4xl border bg-muted/30 p-2.5">
+                    <p className="uppercase tracking-wide text-muted-foreground">Mode</p>
+                    <p className="font-mono mt-0.5">{generation.mode}</p>
+                </div>
+                <div className="rounded-4xl border bg-muted/30 p-2.5">
+                    <p className="uppercase tracking-wide text-muted-foreground">Model</p>
+                    <p className="font-mono mt-0.5">{generation.model}</p>
+                </div>
+                {generation.eval_count !== null && generation.eval_count !== undefined && (
+                    <div className="rounded-4xl border bg-muted/30 p-2.5">
+                        <p className="uppercase tracking-wide text-muted-foreground">Eval count</p>
+                        <p className="font-mono mt-0.5">{generation.eval_count}</p>
+                    </div>
+                )}
+                {generation.total_duration_ns !== null && generation.total_duration_ns !== undefined && (
+                    <div className="rounded-4xl border bg-muted/30 p-2.5">
+                        <p className="uppercase tracking-wide text-muted-foreground">Duration</p>
+                        <p className="font-mono mt-0.5">{formatDuration(generation.total_duration_ns)}</p>
+                    </div>
+                )}
+            </>
+        )
+    } else {
+        // deterministic_fallback
+        return (
+            <>
+                <div className="rounded-4xl border bg-muted/30 p-2.5">
+                    <p className="uppercase tracking-wide text-muted-foreground">Mode</p>
+                    <p className="font-mono mt-0.5">{generation.mode}</p>
+                </div>
+                <div className="rounded-4xl border bg-muted/30 p-2.5 col-span-2">
+                    <p className="uppercase tracking-wide text-muted-foreground">Reason</p>
+                    <p className="font-mono mt-0.5 text-sm">{generation.reason}</p>
+                </div>
+            </>
+        )
+    }
+}
+
 export default function MLReport({ data }: { data: MLReportData }) {
     const tone = verdictTone(data.verdict)
     const VerdictIcon = tone.icon
-    const isFallback = data.generation.mode === "deterministic_fallback"
 
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     const indicatorGroups = useMemo(() => {
         const groups: { label: string; icon: React.ElementType; values: string[] }[] = [
             { label: "IP addresses", icon: Network, values: data.indicators.ips },
@@ -220,6 +259,16 @@ export default function MLReport({ data }: { data: MLReportData }) {
     const hasFamily = !isEmpty(data.family)
     const hasMalwareType = !isEmpty(data.malware_type)
     const hasNarrative = !isEmpty(data.report_markdown)
+    const hasYaraMatches = !isEmpty(data.yara_matches)
+
+    const renderExample = (example: unknown): string => {
+        if (typeof example === 'string') return example
+        if (typeof example === 'number') return String(example)
+        if (typeof example === 'boolean') return String(example)
+        if (example === null) return 'null'
+        if (example === undefined) return 'undefined'
+        return JSON.stringify(example, null, 0)
+    }
 
     return (
         <div className="w-full space-y-4">
@@ -318,9 +367,9 @@ export default function MLReport({ data }: { data: MLReportData }) {
                                             {ev.examples.map((ex, j) => (
                                                 <span
                                                     key={j}
-                                                    className="rounded-md border border-border bg-background px-2 py-1 font-mono text-[11px]"
+                                                    className="rounded-md border border-border bg-background px-2 py-1 font-mono text-[11px] break-all max-w-full"
                                                 >
-                                                    {ex}
+                                                    {renderExample(ex)}
                                                 </span>
                                             ))}
                                         </div>

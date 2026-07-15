@@ -444,38 +444,40 @@ export default function StaticAnalysisReport({ data }: { data: ReportData }) {
                         </div>
 
                         <div>
-                            <div className="mb-2 flex items-center justify-between">
-                                <p className="text-xs font-medium text-muted-foreground">
-                                    Strings ({data.strings_analysis.total_unique_strings_found} unique
-                                    {data.strings_analysis.truncated ? ", truncated" : ""})
-                                </p>
-                                {suspiciousStrings.length > 0 && (
-                                    <Badge className="bg-primary/10 text-primary border border-primary/30 gap-1">
-                                        <KeyRound className="h-3 w-3" />
-                                        {suspiciousStrings.length} flagged
-                                    </Badge>
-                                )}
-                            </div>
-                            <ScrollArea className="max-h-56 rounded-4xl border">
-                                <div className="flex flex-wrap gap-1.5 p-3">
-                                    {data.strings_analysis.strings.map((s, i) => {
-                                        const flagged = isSuspiciousString(s)
-                                        return (
-                                            <span
-                                                key={`${s}-${i}`}
-                                                className={`rounded-md border px-2 py-1 font-mono text-[11px] ${
-                                                    flagged
-                                                        ? "border-primary/40 bg-primary/10 text-primary"
-                                                        : "border-border bg-muted/30 text-muted-foreground"
-                                                }`}
-                                            >
-                                                {s}
-                                            </span>
-                                        )
-                                    })}
-                                </div>
-                            </ScrollArea>
-                        </div>
+  <div className="mb-2 flex items-center justify-between">
+    <p className="text-xs font-medium text-muted-foreground">
+      Strings ({data.strings_analysis.total_unique_strings_found} unique
+      {data.strings_analysis.truncated ? ", truncated" : ""})
+    </p>
+    {suspiciousStrings.length > 0 && (
+      <Badge className="bg-primary/10 text-primary border border-primary/30 gap-1">
+        <KeyRound className="h-3 w-3" />
+        {suspiciousStrings.length} flagged
+      </Badge>
+    )}
+  </div>
+  <div className="rounded-4xl border">
+    <div className="flex flex-wrap gap-1.5 p-3 max-h-96 overflow-y-auto">
+      {data.strings_analysis.strings.map((s, i) => {
+        const flagged = isSuspiciousString(s)
+        
+        return (
+          <span
+            key={`${s}-${i}`}
+            className={`rounded-md border px-2 py-1 font-mono text-[11px] max-w-[200px] truncate ${
+              flagged
+                ? "border-primary/40 bg-primary/10 text-primary"
+                : "border-border bg-muted/30 text-muted-foreground"
+            }`}
+            title={s}
+          >
+            {s}
+          </span>
+        )
+      })}
+    </div>
+  </div>
+</div>
                     </AccordionContent>
                 </AccordionItem>
 

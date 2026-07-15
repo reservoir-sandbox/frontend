@@ -177,7 +177,7 @@ export default function PastReports() {
 
   return (
     <>
-      <Card>
+      <Card className="">
         <CardHeader>
           <CardTitle>Past Reports</CardTitle>
         </CardHeader>
@@ -202,7 +202,11 @@ export default function PastReports() {
                 {samples.map((sample: Sample) => (
                   <TableRow key={sample.sample_id}>
                     <TableCell className="font-medium">{sample.sample_id}</TableCell>
-                    <TableCell>{sample.filename}</TableCell>
+                    <TableCell className="font-medium max-w-[200px]">
+  <span className="block truncate" title={sample.filename}>
+    {sample.filename}
+  </span>
+</TableCell>
                     <TableCell>{new Date(sample.uploaded_at).toLocaleString()}</TableCell>
                     <TableCell>
                       {sample.current_job_id ? (
@@ -258,7 +262,7 @@ export default function PastReports() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Sample?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{sampleToDelete?.filename}"?<br />
+              Are you sure you want to delete "<span className="font-mono text-sm bg-muted/50 py-1 rounded break-all">{sampleToDelete?.filename}</span>"?<br />
               This will remove your access to this sample. The sample itself will remain on the server.
             </AlertDialogDescription>
           </AlertDialogHeader>
