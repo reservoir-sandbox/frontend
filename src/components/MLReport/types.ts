@@ -1,9 +1,9 @@
 
 export interface MLEvidence {
-  title: string
-  explanation: string
-  examples: unknown[]
-  source_ids: string[]
+    title: string
+    explanation: string
+    examples: string[]
+    source_ids: string[]
 }
 
 export interface MLMitreAttack {
@@ -21,17 +21,12 @@ export interface MLIndicators {
   urls: string[]
 }
 
-export type MLGeneration =
-  | {
-      mode: "llm"
-      model: string
-      eval_count: number | null
-      total_duration_ns: number | null
-    }
-  | {
-      mode: "deterministic_fallback"
-      reason: string
-    }
+export interface MLGeneration {
+    mode: string
+    model: string
+    eval_count: number
+    total_duration_ns: number
+}
 
 export interface MLSource {
   adapter_version: string

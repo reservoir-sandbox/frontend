@@ -49,6 +49,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
+import { useAuth } from "@/contexts/AuthContext"
 
 import { type MLReportData, type MLGeneration } from "./types"
 
@@ -195,61 +196,10 @@ function IndicatorGroup({
     )
 }
 
-function renderGenerationInfo(generation: MLGeneration) {
-    if (generation.mode === "llm") {
-        return (
-            <>
-                <div className="rounded-4xl border bg-muted/30 p-2.5">
-                    <p className="uppercase tracking-wide text-muted-foreground">Mode</p>
-                    <p className="font-mono mt-0.5">{generation.mode}</p>
-                </div>
-                <div className="rounded-4xl border bg-muted/30 p-2.5">
-                    <p className="uppercase tracking-wide text-muted-foreground">Model</p>
-                    <p className="font-mono mt-0.5">{generation.model}</p>
-                </div>
-                {generation.eval_count !== null && generation.eval_count !== undefined && (
-                    <div className="rounded-4xl border bg-muted/30 p-2.5">
-                        <p className="uppercase tracking-wide text-muted-foreground">Eval count</p>
-                        <p className="font-mono mt-0.5">{generation.eval_count}</p>
-                    </div>
-                )}
-                {generation.total_duration_ns !== null && generation.total_duration_ns !== undefined && (
-                    <div className="rounded-4xl border bg-muted/30 p-2.5">
-                        <p className="uppercase tracking-wide text-muted-foreground">Duration</p>
-                        <p className="font-mono mt-0.5">{formatDuration(generation.total_duration_ns)}</p>
-                    </div>
-                )}
-            </>
-        )
-    } else {
-        return (
-            <>
-                <div className="rounded-4xl border bg-muted/30 p-2.5">
-                    <p className="uppercase tracking-wide text-muted-foreground">Mode</p>
-                    <p className="font-mono mt-0.5">{generation.mode}</p>
-                </div>
-                <div className="rounded-4xl border bg-muted/30 p-2.5 col-span-2">
-                    <p className="uppercase tracking-wide text-muted-foreground">Reason</p>
-                    <p className="font-mono mt-0.5 text-sm">{generation.reason}</p>
-                </div>
-            </>
-        )
-    }
-}
-
-export default function MLReport({ data, error }: { data: MLReportData; error?: string | null }) {
-    if (error || !data || !data.verdict) {
-        return (
-            <Alert variant="destructive" className="border-primary/40 bg-primary/5 text-primary">
-                <FileWarning className="h-4 w-4" />
-                <AlertTitle>Analysis error</AlertTitle>
-                <AlertDescription>{error || "ML analysis data is incomplete or not available"}</AlertDescription>
-            </Alert>
-        )
-    }
-
+export default function MLReport({ data }: { data: MLReportData }) {
     const tone = verdictTone(data.verdict)
     const VerdictIcon = tone.icon
+    const isFallback = data.generation.mode === "deterministic_fallback"
 
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const indicatorGroups = useMemo(() => {
@@ -270,7 +220,6 @@ export default function MLReport({ data, error }: { data: MLReportData; error?: 
     const hasFamily = !isEmpty(data.family)
     const hasMalwareType = !isEmpty(data.malware_type)
     const hasNarrative = !isEmpty(data.report_markdown)
-    const hasYaraMatches = !isEmpty(data.yara_matches)
 
     return (
         <div className="w-full space-y-4">
@@ -371,7 +320,7 @@ export default function MLReport({ data, error }: { data: MLReportData; error?: 
                                                     key={j}
                                                     className="rounded-md border border-border bg-background px-2 py-1 font-mono text-[11px]"
                                                 >
-                                                    {String(ex)}
+                                                    {ex}
                                                 </span>
                                             ))}
                                         </div>
