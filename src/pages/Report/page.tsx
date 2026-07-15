@@ -326,7 +326,7 @@ export default function Report() {
                     {renderContent(
                         "ml",
                         mlReport ? (
-                            <MLReport data={mlReport} />
+                            <MLReport data={mlReport} error={mlError} />
                         ) : (
                             <Card>
                                 <CardContent className="py-8 text-center text-muted-foreground">

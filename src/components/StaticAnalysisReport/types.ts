@@ -87,7 +87,7 @@ export interface ReportData {
     disassembly: Disassembly
     strings_analysis: StringsAnalysis
     security_mitigations: SecurityMitigations
-    build_id: string
+    build_id: string | null
     compiler_info: string[]
     error?: string | null
 }

@@ -50,41 +50,42 @@ import {
 } from "@/components/ui/tooltip"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 
-import { type MLReportData } from "./types"
+import { type MLReportData, type MLGeneration } from "./types"
 
 function isEmpty(value: unknown): boolean {
     if (value === null || value === undefined) return true
     if (typeof value === "string") return value.trim().length === 0
     if (Array.isArray(value)) return value.length === 0
+    if (typeof value === "object") return Object.keys(value).length === 0
     return false
 }
 
-function formatDuration(ns: number) {
+function formatDuration(ns: number | null): string {
+    if (ns === null || ns === undefined) return "N/A"
     const seconds = ns / 1_000_000_000
     return seconds >= 1 ? `${seconds.toFixed(2)}s` : `${(ns / 1_000_000).toFixed(0)}ms`
 }
 
 function verdictTone(verdict: string) {
-    const v = verdict.toLowerCase()
-    if (v === "malicious") {
+    if (verdict === "malicious") {
         return {
             icon: ShieldAlert,
             className: "bg-primary/10 text-primary border-primary/30",
         }
     }
-    if (v === "suspicious") {
+    if (verdict === "suspicious") {
         return {
             icon: ShieldQuestion,
             className: "bg-accent text-accent-foreground border-border",
         }
     }
-    if (v === "benign") {
+    if (verdict === "benign") {
         return {
             icon: ShieldCheck,
             className: "bg-muted text-muted-foreground border-border",
         }
     }
-    if (v === "inconclusive") {
+    if (verdict === "inconclusive") {
         return {
             icon: HelpCircle,
             className: "bg-yellow-500/10 text-yellow-600 border-yellow-500/30",
@@ -124,9 +125,6 @@ function CopyableHash({ label, value }: { label: string; value: string }) {
         }
     }
 
-
-
-
     return (
         <div className="flex items-center justify-between gap-3 rounded-4xl border border-border bg-muted/30 px-3 py-2">
             <div className="min-w-0">
@@ -152,17 +150,18 @@ function CopyableHash({ label, value }: { label: string; value: string }) {
 }
 
 function parseSimpleMarkdown(text: string): string {
-  const html = text
-    // Bold: **text** -> <strong>text</strong>
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    // Italic: *text* -> <em>text</em>
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    // Code: `text` -> <code>text</code>
-    .replace(/`(.*?)`/g, '<code class="bg-muted px-1 py-0.5 rounded font-mono text-xs">$1</code>')
-    // Newline -> <br/>
-    .replace(/\n/g, '<br/>')
-  
-  return html
+    if (!text) return ""
+    const html = text
+        // Bold: **text** -> <strong>text</strong>
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        // Italic: *text* -> <em>text</em>
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        // Code: `text` -> <code>text</code>
+        .replace(/`(.*?)`/g, '<code class="bg-muted px-1 py-0.5 rounded font-mono text-xs">$1</code>')
+        // Newline -> <br/>
+        .replace(/\n/g, '<br/>')
+    
+    return html
 }
 
 function IndicatorGroup({
@@ -174,6 +173,8 @@ function IndicatorGroup({
     icon: React.ElementType
     values: string[]
 }) {
+    if (isEmpty(values)) return null
+    
     return (
         <div>
             <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
@@ -194,10 +195,63 @@ function IndicatorGroup({
     )
 }
 
-export default function MLReport({ data }: { data: MLReportData }) {
+function renderGenerationInfo(generation: MLGeneration) {
+    if (generation.mode === "llm") {
+        return (
+            <>
+                <div className="rounded-4xl border bg-muted/30 p-2.5">
+                    <p className="uppercase tracking-wide text-muted-foreground">Mode</p>
+                    <p className="font-mono mt-0.5">{generation.mode}</p>
+                </div>
+                <div className="rounded-4xl border bg-muted/30 p-2.5">
+                    <p className="uppercase tracking-wide text-muted-foreground">Model</p>
+                    <p className="font-mono mt-0.5">{generation.model}</p>
+                </div>
+                {generation.eval_count !== null && generation.eval_count !== undefined && (
+                    <div className="rounded-4xl border bg-muted/30 p-2.5">
+                        <p className="uppercase tracking-wide text-muted-foreground">Eval count</p>
+                        <p className="font-mono mt-0.5">{generation.eval_count}</p>
+                    </div>
+                )}
+                {generation.total_duration_ns !== null && generation.total_duration_ns !== undefined && (
+                    <div className="rounded-4xl border bg-muted/30 p-2.5">
+                        <p className="uppercase tracking-wide text-muted-foreground">Duration</p>
+                        <p className="font-mono mt-0.5">{formatDuration(generation.total_duration_ns)}</p>
+                    </div>
+                )}
+            </>
+        )
+    } else {
+        return (
+            <>
+                <div className="rounded-4xl border bg-muted/30 p-2.5">
+                    <p className="uppercase tracking-wide text-muted-foreground">Mode</p>
+                    <p className="font-mono mt-0.5">{generation.mode}</p>
+                </div>
+                <div className="rounded-4xl border bg-muted/30 p-2.5 col-span-2">
+                    <p className="uppercase tracking-wide text-muted-foreground">Reason</p>
+                    <p className="font-mono mt-0.5 text-sm">{generation.reason}</p>
+                </div>
+            </>
+        )
+    }
+}
+
+export default function MLReport({ data, error }: { data: MLReportData; error?: string | null }) {
+    if (error || !data || !data.verdict) {
+        return (
+            <Alert variant="destructive" className="border-primary/40 bg-primary/5 text-primary">
+                <FileWarning className="h-4 w-4" />
+                <AlertTitle>Analysis error</AlertTitle>
+                <AlertDescription>{error || "ML analysis data is incomplete or not available"}</AlertDescription>
+            </Alert>
+        )
+    }
+
     const tone = verdictTone(data.verdict)
     const VerdictIcon = tone.icon
 
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     const indicatorGroups = useMemo(() => {
         const groups: { label: string; icon: React.ElementType; values: string[] }[] = [
             { label: "IP addresses", icon: Network, values: data.indicators.ips },
@@ -216,17 +270,10 @@ export default function MLReport({ data }: { data: MLReportData }) {
     const hasFamily = !isEmpty(data.family)
     const hasMalwareType = !isEmpty(data.malware_type)
     const hasNarrative = !isEmpty(data.report_markdown)
+    const hasYaraMatches = !isEmpty(data.yara_matches)
 
     return (
         <div className="w-full space-y-4">
-            {data.error && (
-                <Alert variant="destructive" className="border-primary/40 bg-primary/5 text-primary">
-                    <FileWarning className="h-4 w-4" />
-                    <AlertTitle>Analysis error</AlertTitle>
-                    <AlertDescription>{data.error}</AlertDescription>
-                </Alert>
-            )}
-
             <Card className="border-border">
                 <CardHeader className="pb-3">
                     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -268,35 +315,32 @@ export default function MLReport({ data }: { data: MLReportData }) {
                         </div>
                         <div className="rounded-4xl border bg-muted/30 p-3">
                             <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Family</p>
-                            <p className="text-sm font-semibold">{hasFamily ? data.family : <span className="text-muted-foreground font-normal">Unattributed</span>}</p>
+                            <p className="text-sm font-semibold">
+                                {hasFamily ? data.family : <span className="text-muted-foreground font-normal">Unattributed</span>}
+                            </p>
                         </div>
                         <div className="rounded-4xl border bg-muted/30 p-3">
                             <p className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
                                 <Cpu className="h-3 w-3" /> Model
                             </p>
-                            <p className="text-sm font-semibold truncate">{data.generation.model}</p>
+                            <p className="text-sm font-semibold truncate">
+                                {data.generation.mode === "llm" 
+                                    ? data.generation.model 
+                                    : "Fallback"}
+                            </p>
                         </div>
                     </div>
 
                     <CopyableHash label="SHA-256" value={data.source.raw_sha256} />
 
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 text-xs">
-                        <div className="rounded-4xl border bg-muted/30 p-2.5">
-                            <p className="uppercase tracking-wide text-muted-foreground">Mode</p>
-                            <p className="font-mono mt-0.5">{data.generation.mode}</p>
-                        </div>
-                        <div className="rounded-4xl border bg-muted/30 p-2.5">
-                            <p className="uppercase tracking-wide text-muted-foreground">Eval count</p>
-                            <p className="font-mono mt-0.5">{data.generation.eval_count}</p>
-                        </div>
-                        <div className="rounded-4xl border bg-muted/30 p-2.5">
-                            <p className="uppercase tracking-wide text-muted-foreground">Duration</p>
-                            <p className="font-mono mt-0.5">{formatDuration(data.generation.total_duration_ns)}</p>
-                        </div>
+                        {renderGenerationInfo(data.generation)}
                         <div className="rounded-4xl border bg-muted/30 p-2.5">
                             <p className="uppercase tracking-wide text-muted-foreground">Strings scanned</p>
                             <p className="font-mono mt-0.5">
-                                {data.source.strings_total}
+                                {data.source.strings_total !== null && data.source.strings_total !== undefined
+                                    ? data.source.strings_total
+                                    : "N/A"}
                                 {data.source.strings_truncated ? " (truncated)" : ""}
                             </p>
                         </div>
@@ -327,7 +371,7 @@ export default function MLReport({ data }: { data: MLReportData }) {
                                                     key={j}
                                                     className="rounded-md border border-border bg-background px-2 py-1 font-mono text-[11px]"
                                                 >
-                                                    {ex}
+                                                    {String(ex)}
                                                 </span>
                                             ))}
                                         </div>
@@ -373,7 +417,7 @@ export default function MLReport({ data }: { data: MLReportData }) {
                         </AccordionTrigger>
                         <AccordionContent className="px-3 pb-4">
                             <div className="rounded-4xl border overflow-hidden">
-                                <div className="max-h-64">
+                                <div className="max-h-64 overflow-auto">
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
@@ -400,6 +444,24 @@ export default function MLReport({ data }: { data: MLReportData }) {
                     </AccordionItem>
                 )}
 
+                {hasYaraMatches && (
+                    <AccordionItem value="yara" className="rounded-xl border px-1">
+                        <AccordionTrigger className="px-3 hover:no-underline">
+                            <span className="flex items-center gap-2 text-sm font-medium">
+                                <FileWarning className="h-4 w-4 text-primary" />
+                                YARA Matches ({data.yara_matches?.length || 0})
+                            </span>
+                        </AccordionTrigger>
+                        <AccordionContent className="px-3 pb-4">
+                            <div className="rounded-4xl border bg-muted/30 p-3">
+                                <pre className="text-xs whitespace-pre-wrap break-all font-mono text-muted-foreground">
+                                    {JSON.stringify(data.yara_matches, null, 2)}
+                                </pre>
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                )}
+
                 {hasNarrative && (
                     <AccordionItem value="narrative" className="rounded-xl border px-1">
                         <AccordionTrigger className="px-3 hover:no-underline">
@@ -411,7 +473,7 @@ export default function MLReport({ data }: { data: MLReportData }) {
                         <AccordionContent className="px-3 pb-4">
                             <div className="rounded-4xl border bg-muted/30 p-4">
                                 <div
-                                    className="text-2xs leading-relaxed text-white"
+                                    className="text-xs leading-relaxed text-foreground prose prose-sm dark:prose-invert max-w-none"
                                     dangerouslySetInnerHTML={{
                                         __html: parseSimpleMarkdown(data.report_markdown)
                                     }}

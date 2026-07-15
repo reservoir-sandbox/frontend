@@ -1,58 +1,57 @@
+
 export interface MLEvidence {
-    title: string
-    explanation: string
-    examples: string[]
-    source_ids: string[]
+  title: string
+  explanation: string
+  examples: unknown[]
+  source_ids: string[]
 }
 
 export interface MLMitreAttack {
-    technique_id: string
-    name: string
-    source_ids: string[]
+  technique_id: string
+  name: string
+  source_ids: string[]
 }
 
 export interface MLIndicators {
-    domains: string[]
-    file_paths: string[]
-    hashes: string[]
-    ips: string[]
-    mutexes: string[]
-    urls: string[]
+  domains: string[]
+  file_paths: string[]
+  hashes: string[]
+  ips: string[]
+  mutexes: string[]
+  urls: string[]
 }
 
-export interface MLGeneration {
-    mode: string
-    model: string
-    eval_count: number
-    total_duration_ns: number
-}
+export type MLGeneration =
+  | {
+      mode: "llm"
+      model: string
+      eval_count: number | null
+      total_duration_ns: number | null
+    }
+  | {
+      mode: "deterministic_fallback"
+      reason: string
+    }
 
 export interface MLSource {
-    adapter_version: string
-    filename: string
-    raw_sha256: string
-    strings_total: number
-    strings_truncated: boolean
+  adapter_version: string
+  filename: string
+  raw_sha256: string
+  strings_total: number | null
+  strings_truncated: boolean
 }
 
 export interface MLReportData {
-    verdict: string
-    malware_type: string | null
-    family: string | null
-    confidence: number
-    summary: string
-    report_markdown: string
-    evidence: MLEvidence[]
-    indicators: MLIndicators
-    mitre_attack: MLMitreAttack[]
-    generation: MLGeneration
-    source: MLSource
-    error?: string | null
-}
-
-export interface MLAnalysisResponse {
-    task_id: string
-    status: string
-    location: string
-    report: MLReportData
+  verdict: "malicious" | "suspicious" | "benign" | "inconclusive"
+  malware_type: string
+  family: string | null
+  confidence: number
+  summary: string
+  report_markdown: string
+  evidence: MLEvidence[]
+  indicators: MLIndicators
+  mitre_attack: MLMitreAttack[]
+  generation: MLGeneration
+  source: MLSource
+  yara_matches?: unknown[]
 }
