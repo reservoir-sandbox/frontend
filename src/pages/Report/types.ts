@@ -21,4 +21,4 @@ export type Job = {
     tasks: JobTask[]
 }
 
-export type TabKey = "ml" | "static-analysis"
+export type TabKey = "ml" | "static-analysis" | "yara"

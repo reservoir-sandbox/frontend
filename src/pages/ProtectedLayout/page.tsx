@@ -20,14 +20,14 @@ const ProtectedLayout: React.FC = () => {
       <LoadingScreen totalSteps={30} />
     );
   }
-  
+
   return (
     <SidebarProvider>
-      <div className="flex w-full">
+      <div className="flex w-full h-svh">
         <Sidebar user={user} onLogout={logout} />
-        <main className="flex-1 p-4">
+        <main className="flex-1 flex flex-col min-h-0 p-4 overflow-y-auto">
           <SidebarTrigger />
-          <div className="pt-2 w-full">
+          <div className="pt-2 w-full flex-1 min-h-0">
             <Outlet />
           </div>
         </main>

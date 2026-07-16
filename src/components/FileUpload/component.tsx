@@ -20,7 +20,6 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Spinner } from "@/components/ui/spinner"
 import { CircleAlertIcon, FileTextIcon, RefreshCwIcon, UploadIcon, XIcon } from 'lucide-react'
-import { useLoading } from '@/contexts/LoadingContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { API_URL } from "@/utils/api"
 
@@ -45,7 +44,7 @@ const isELFFile = async (file: File): Promise<boolean> => {
 
 export default function Pattern({
   maxFiles = 1,
-  maxSize = 10 * 1024 * 1024,
+  maxSize = 1 * 1024 * 1024,
   accept = ".elf,.bin,application/x-elf,application/x-binary,application/octet-stream",
   multiple = false,
   className,
@@ -53,9 +52,8 @@ export default function Pattern({
   simulateUpload = true,
 }: ProgressUploadProps) {
   const navigate = useNavigate()
-  const { setShowLoading } = useLoading();
   const { isAuthenticated } = useAuth();
-  
+
   const [uploadFiles, setUploadFiles] = useState<FileUploadItem[]>([])
   const [elfValidationErrors, setElfValidationErrors] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
@@ -197,13 +195,13 @@ export default function Pattern({
 
   const handleSubmit = async () => {
     if (isSubmitDisabled) return
-    
+
     setIsSubmitting(true)
     setUploadError(null)
 
     try {
       const token = localStorage.getItem('reservoir-bearer-token')
-      
+
       if (!token) {
         throw new Error("No authentication token found. Please login first.")
       }
@@ -227,36 +225,29 @@ export default function Pattern({
 
       if (!response.ok) {
         let errorMessage = `Upload failed: ${response.status}`
-        
+
         try {
           const errorData = await response.json()
           if (errorData.detail) {
-            errorMessage = typeof errorData.detail === "string" 
-              ? errorData.detail 
+            errorMessage = typeof errorData.detail === "string"
+              ? errorData.detail
               : JSON.stringify(errorData.detail)
           }
         } catch {
           // JSON parse ignore
         }
-        
+
         throw new Error(errorMessage)
       }
 
       const data = await response.json()
-      
       const jobID = data.id
-
-      setShowLoading(true)
-
-      setTimeout(() => {
-        setShowLoading(false)
-        navigate(`/report/${jobID}`)
-      }, 5000)
+      navigate(`/report/${jobID}`)
 
     } catch (error) {
       console.error("Upload failed:", error)
       setUploadError(error instanceof Error ? error.message : "Upload failed")
-      
+
       setUploadFiles((prev) =>
         prev.map((f) =>
           f.id === uploadFiles[0]?.id
@@ -270,8 +261,8 @@ export default function Pattern({
   }
 
   return (
-    <div className={cn("w-full h-full flex flex-col", className)}>
-      <div className="flex-1 min-h-0">
+    <div className={cn("w-full h-screen flex flex-col min-w-0", className)}>
+      <div className={`flex-1 ${uploadFiles.length > 0 ? 'max-h-3/5' : ''} `}>
         <div
           className={cn(
             "rounded-4xl relative border border-dashed p-8 text-center transition-colors h-full flex flex-col justify-center",
@@ -301,13 +292,13 @@ export default function Pattern({
             </div>
 
             <div className="space-y-2">
-              <h3 className="text-lg font-semibold">Upload ELF Linux Binaries</h3>
+              <h3 className="text-lg font-semibold">Upload ELF Linux Binary</h3>
               <p className="text-muted-foreground text-xs">
-                Only ELF Linux binary file is accepted. Maximum size: {formatBytes(maxSize)} each
+                Only ELF Linux binary file is accepted. Maximum size: {formatBytes(maxSize)}
               </p>
               {!isAuthenticated && (
                 <p className="text-destructive text-xs font-medium">
-                  Please login to upload files
+                  Please login to upload file
                 </p>
               )}
             </div>
@@ -350,7 +341,7 @@ export default function Pattern({
       )}
 
       {uploadFiles.length > 0 && (
-        <div className="mt-4 flex-1 min-h-0 overflow-y-auto">
+        <div className="mt-4 shrink-0">
           <div className="space-y-3">
             {uploadFiles.map((fileItem: FileUploadItem) => (
               <div
@@ -366,8 +357,10 @@ export default function Pattern({
 
                   <div className="min-w-0 flex-1">
                     <div className="mt-0.75 flex items-center justify-between">
-                      <p className="inline-flex flex-col justify-center gap-1 truncate font-medium">
-                        <span className="text-sm">{fileItem.file.name}</span>
+                      <p className="inline-flex min-w-0 flex-1 flex-col justify-center gap-1 font-medium">
+                        <span className="text-sm truncate block max-w-50 sm:max-w-70 md:max-w-90">
+                          {fileItem.file.name}
+                        </span>
                         <span className="text-muted-foreground text-xs">
                           {formatBytes(fileItem.file.size)}
                         </span>
@@ -412,7 +405,7 @@ export default function Pattern({
                 </div>
               </div>
             ))}
-            
+
             <div className="flex justify-center pt-4 pb-2">
               <Button
                 className="w-2xs"

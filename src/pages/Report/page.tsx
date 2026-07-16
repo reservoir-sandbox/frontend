@@ -6,6 +6,7 @@ import {
     FileSearch,
     AlertCircle,
     AlertTriangle,
+    ScanSearch,
 } from "lucide-react"
 
 import {
@@ -28,12 +29,15 @@ import StaticAnalysisReport from "@/components/StaticAnalysisReport"
 import { type ReportData } from "@/components/StaticAnalysisReport/types"
 import MLReport from "@/components/MLReport"
 import { type MLReportData } from "@/components/MLReport/types"
+import YaraReport from "@/components/YARAReport"
+import { type YaraReportData } from "@/components/YARAReport/types"
 import { API_URL, TOKEN_KEY } from "@/utils/api"
 import type { TabKey, Job } from "./types"
 
 const TABS: { value: TabKey; label: string; icon: React.ReactNode }[] = [
     { value: "ml", label: "ML", icon: <FlaskConical className="h-4 w-4" /> },
     { value: "static-analysis", label: "Static Analysis", icon: <FileSearch className="h-4 w-4" /> },
+    { value: "yara", label: "YARA", icon: <ScanSearch className="h-4 w-4" /> },
 ]
 
 const SkeletonCard = ({ dense = false }: { dense?: boolean }) => (
@@ -65,6 +69,7 @@ export default function Report() {
     const [job, setJob] = useState<Job | null>(null)
     const [staticReport, setStaticReport] = useState<ReportData | null>(null)
     const [mlReport, setMlReport] = useState<MLReportData | null>(null)
+    const [yaraReport, setYaraReport] = useState<YaraReportData | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
@@ -72,10 +77,13 @@ export default function Report() {
 
     const [isStaticLoading, setIsStaticLoading] = useState(true)
     const [isMLLoading, setIsMLLoading] = useState(true)
+    const [isYaraLoading, setIsYaraLoading] = useState(true)
     const [staticError, setStaticError] = useState<string | null>(null)
     const [mlError, setMLError] = useState<string | null>(null)
+    const [yaraError, setYaraError] = useState<string | null>(null)
 
     const parseJobResults = useCallback((jobData: Job) => {
+        // ML Task
         const mlTask = jobData.tasks.find((t) => t.task_type === "ml")
         if (mlTask) {
             if (mlTask.status === "completed" && mlTask.result) {
@@ -105,6 +113,7 @@ export default function Report() {
             }
         }
 
+        // Static Task
         const staticTask = jobData.tasks.find((t) => t.task_type === "static")
         if (staticTask) {
             if (staticTask.status === "completed" && staticTask.result) {
@@ -130,6 +139,36 @@ export default function Report() {
             } else {
                 if (isMountedRef.current) {
                     setIsStaticLoading(true)
+                }
+            }
+        }
+
+        // YARA / Sandbox Task
+        const yaraTask = jobData.tasks.find((t) => t.task_type === "sandbox")
+        if (yaraTask) {
+            if (yaraTask.status === "completed" && yaraTask.result) {
+                try {
+                    const yaraData = typeof yaraTask.result === "string" ? JSON.parse(yaraTask.result) : yaraTask.result
+                    if (isMountedRef.current) {
+                        setYaraReport(yaraData as YaraReportData)
+                        setIsYaraLoading(false)
+                        setYaraError(null)
+                    }
+                } catch (err) {
+                    console.error("Failed to parse YARA result:", err)
+                    if (isMountedRef.current) {
+                        setYaraError("Failed to parse YARA analysis result")
+                        setIsYaraLoading(false)
+                    }
+                }
+            } else if (yaraTask.status === "failed") {
+                if (isMountedRef.current) {
+                    setYaraError(yaraTask.error || "YARA analysis failed")
+                    setIsYaraLoading(false)
+                }
+            } else {
+                if (isMountedRef.current) {
+                    setIsYaraLoading(true)
                 }
             }
         }
@@ -165,6 +204,8 @@ export default function Report() {
             }
 
             const data: Job = await response.json()
+            console.log("Full Job Data:", data)
+
             if (isMountedRef.current) {
                 setJob(data)
                 parseJobResults(data)
@@ -211,8 +252,10 @@ export default function Report() {
                 setError(null)
                 setIsStaticLoading(true)
                 setIsMLLoading(true)
+                setIsYaraLoading(true)
                 setStaticError(null)
                 setMLError(null)
+                setYaraError(null)
             }
 
             const result = await fetchJob()
@@ -235,8 +278,8 @@ export default function Report() {
     }, [id, fetchJob, startPolling, stopPolling])
 
     const renderContent = (tab: TabKey, content: React.ReactNode, dense = false) => {
-        const isTabLoading = tab === "ml" ? isMLLoading : isStaticLoading
-        const tabError = tab === "ml" ? mlError : staticError
+        const isTabLoading = tab === "ml" ? isMLLoading : tab === "static-analysis" ? isStaticLoading : isYaraLoading
+        const tabError = tab === "ml" ? mlError : tab === "static-analysis" ? staticError : yaraError
 
         if (isTabLoading) {
             return <SkeletonCard dense={dense} />
@@ -290,9 +333,9 @@ export default function Report() {
             >
                 <TabsList className="w-full max-w-4xl mb-5 flex flex-wrap justify-center gap-2">
                     {TABS.map((tab) => {
-                        const isTabLoading = tab.value === "ml" ? isMLLoading : isStaticLoading
-                        const tabError = tab.value === "ml" ? mlError : staticError
-                        const hasData = tab.value === "ml" ? !!mlReport : !!staticReport
+                        const isTabLoading = tab.value === "ml" ? isMLLoading : tab.value === "static-analysis" ? isStaticLoading : isYaraLoading
+                        const tabError = tab.value === "ml" ? mlError : tab.value === "static-analysis" ? staticError : yaraError
+                        const hasData = tab.value === "ml" ? !!mlReport : tab.value === "static-analysis" ? !!staticReport : !!yaraReport
                         const isDisabled = isTabLoading || !!tabError || (!hasData && !isTabLoading)
 
                         return (
@@ -344,6 +387,22 @@ export default function Report() {
                             <Card>
                                 <CardContent className="py-8 text-center text-muted-foreground">
                                     Static analysis data not available
+                                </CardContent>
+                            </Card>
+                        ),
+                        true
+                    )}
+                </TabsContent>
+
+                <TabsContent value="yara" className="w-full">
+                    {renderContent(
+                        "yara",
+                        yaraReport ? (
+                            <YaraReport data={yaraReport} />
+                        ) : (
+                            <Card>
+                                <CardContent className="py-8 text-center text-muted-foreground">
+                                    YARA analysis data not available
                                 </CardContent>
                             </Card>
                         ),

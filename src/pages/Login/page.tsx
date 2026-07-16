@@ -1,4 +1,4 @@
-import React, { useReducer, useEffect } from 'react';
+import React, { useReducer } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,7 +10,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLoading } from '@/contexts/LoadingContext';
 import Logo from '@/assets/reservoir-logo.png';
 import Cover from '@/assets/loading-logo.jpeg';
 import type { LoginFormState, LoginFormAction } from './types';
@@ -43,8 +42,7 @@ const loginReducer = (
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth();
-  const { showLoading, setShowLoading } = useLoading();
+  const { login } = useAuth();
 
   const [state, dispatch] = useReducer(loginReducer, {
     username: '',
@@ -53,12 +51,6 @@ const Login: React.FC = () => {
     error: null,
     success: false,
   });
-
-  useEffect(() => {
-    if (isAuthenticated && !showLoading) {
-      navigate('/');
-    }
-  }, [isAuthenticated, navigate, showLoading]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -78,17 +70,11 @@ const Login: React.FC = () => {
     const result = await login(state.username, state.password);
 
     if (result.success) {
-      setShowLoading(true);
-
-      setTimeout(() => {
-        setShowLoading(false);
-        navigate('/');
-      }, 5000);
+      navigate('/'); // artık beklemeden direkt yönlendiriyor
     } else {
       dispatch({ type: 'SET_ERROR', payload: result.error || 'Login failed' });
+      dispatch({ type: 'SET_LOADING', payload: false });
     }
-
-    dispatch({ type: 'SET_LOADING', payload: false });
   };
 
   return (
